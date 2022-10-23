@@ -16,6 +16,8 @@ namespace AGAREditor
         UInt32 FileCount;
         string Path;
 
+        long HeaderOffset;
+
         public List<ArchiveEntry> Files;
 
         public AGAR(string p)
@@ -87,22 +89,91 @@ namespace AGAREditor
                         byte type = file.ReadByte();
                     }
                 }
+
+                archive.HeaderOffset = file.BaseStream.Position;
             }
 
             return archive;
         }
 
         // save this archive to disk as a WAD file
-        public void Save()
+        public void Save(string wad)
         {
+            // prevent overwrite of existing wad file
+            if (wad == Path)
+                return;
 
+            using (BinaryWriter file = new BinaryWriter(File.Open(wad, FileMode.Create)))
+            {
+                // write header : AGAR
+                file.Write(Encoding.ASCII.GetBytes("AGAR"));
+                // write header : version numbers
+                file.Write(VersionMajor);
+                file.Write(VersionMinor);
+                // write header : the thing that i dont know what it does
+                file.Write(UInt32.MinValue); // is this a bad way to do it? maybe. do i care? not really
+
+                // write file structure
+                UInt64 currentOffset = 0;
+
+                file.Write(Files.Count);
+                for (int i = 0; i < Files.Count; i++)
+                {
+                    // write path length and the path itself
+                    file.Write(Files[i].Path.Length);
+                    file.Write(Encoding.ASCII.GetBytes(Files[i].Path));
+                    file.Write(Files[i].Size);
+                    file.Write(currentOffset);
+                    currentOffset += Files[i].Size;
+                }
+
+                // write directory structure
+                // (hardcoded for now, i just want to edit hotline miami 2 music files)
+                file.Write((UInt32)2); // number of directories
+                file.Write((UInt32)0); // length of first directory name (that would be the root directory)
+                file.Write((UInt32)1); // entries in this directory
+                file.Write((UInt32)5); // length of entry name (5, length of "Music")
+                file.Write(Encoding.ASCII.GetBytes("Music")); // name of that entry
+                file.Write((byte)1); // type of entry (1 specifies directory)
+
+                file.Write((UInt32)5); // length of second directory name (5, length of "Music")
+                file.Write(Encoding.ASCII.GetBytes("Music")); // name of this directory
+                file.Write(Files.Count); // entries in this directory
+
+                for (int i = 0; i < Files.Count; i++)
+                {
+                    string name = Files[i].Path.Substring(6); // this removes "Music/" from the path, good for this test code but NOT a permanent solution
+                    file.Write(name.Length); // write file name length
+                    file.Write(Encoding.ASCII.GetBytes(name)); // write file name
+                    file.Write((byte)0); // type of entry (0 specifies file I THINK)
+                }
+
+                // write file data
+                using (BinaryReader basewad = new BinaryReader(File.Open(Path, FileMode.Open)))
+                {
+                    basewad.BaseStream.Seek(HeaderOffset, SeekOrigin.Begin);
+                    for (int i = 0; i < Files.Count; i++)
+                    {
+                        if (Files[i].FilePath == "")
+                        {
+                            file.Write(basewad.ReadBytes((int)Files[i].Size));
+                        } else
+                        {
+                            using (BinaryReader customFile = new BinaryReader(File.Open(Files[i].FilePath, FileMode.Open)))
+                            {
+                                file.Write(customFile.ReadBytes((int)customFile.BaseStream.Length));
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         public byte[] GetFileData(int fileIndex)
         {
             using (BinaryReader file = new BinaryReader(File.Open(Path, FileMode.Open)))
             {
-                file.BaseStream.Seek((long)Files[fileIndex].Position, SeekOrigin.Begin);
+                file.BaseStream.Seek((long)Files[fileIndex].Position + HeaderOffset, SeekOrigin.Begin);
                 return file.ReadBytes((int)Files[fileIndex].Size);
             }
         }

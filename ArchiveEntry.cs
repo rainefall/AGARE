@@ -15,6 +15,8 @@ namespace AGAREditor
         public UInt64 Size;
         public UInt64 Position;
 
+        public string FilePath = "";
+
         override public string ToString()
         {
             return Path;

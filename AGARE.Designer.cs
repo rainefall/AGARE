@@ -88,6 +88,7 @@
             this.saveWADToolStripMenuItem.Name = "saveWADToolStripMenuItem";
             this.saveWADToolStripMenuItem.Size = new System.Drawing.Size(123, 22);
             this.saveWADToolStripMenuItem.Text = "Save";
+            this.saveWADToolStripMenuItem.Click += new System.EventHandler(this.saveWADToolStripMenuItem_Click);
             // 
             // saveAsToolStripMenuItem
             // 
@@ -129,6 +130,7 @@
             this.addResourceToolStripMenuItem.Name = "addResourceToolStripMenuItem";
             this.addResourceToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.addResourceToolStripMenuItem.Text = "Replace File";
+            this.addResourceToolStripMenuItem.Click += new System.EventHandler(this.addResourceToolStripMenuItem_Click);
             // 
             // toolStripSeparator1
             // 
@@ -140,6 +142,7 @@
             this.addFileToolStripMenuItem.Name = "addFileToolStripMenuItem";
             this.addFileToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.addFileToolStripMenuItem.Text = "Add File";
+            this.addFileToolStripMenuItem.Click += new System.EventHandler(this.addFileToolStripMenuItem_Click);
             // 
             // helpToolStripMenuItem
             // 
